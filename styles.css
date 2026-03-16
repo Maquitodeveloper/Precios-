@@ -1,0 +1,224 @@
+:root{
+  --bg:#0f1724;
+  --card-bg:#0b1220;
+  --accent:#6ee7b7;
+  --muted:#9aa4b2;
+  --glass: rgba(255,255,255,0.03);
+  --card-radius:18px;
+  --transition: 400ms cubic-bezier(.2,.9,.3,1);
+  --max-width:1100px;
+
+  /* Tipografía */
+  --font-heading: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+
+  --h1-size:28px;
+  --h2-size:20px;
+  --body-size:15px;
+}
+
+/* Reset y base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font-body);
+  background: linear-gradient(180deg,#071021 0%, var(--bg) 100%);
+  color:#e6eef6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:48px 20px;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Contenedor */
+.wrap{
+  width:100%;
+  max-width:var(--max-width);
+  text-align:center;
+}
+.hero h1{
+  margin:0 0 8px 0;
+  font-family:var(--font-heading);
+  font-size:var(--h1-size);
+  letter-spacing:-0.02em;
+  font-weight:700;
+}
+.lead{
+  margin:0 0 36px 0;
+  color:var(--muted);
+  font-size:var(--body-size);
+  font-weight:400;
+}
+
+/* Grid de cards */
+.cards{
+  display:grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:28px;
+  perspective:1400px;
+  align-items:start;
+}
+@media (max-width:920px){
+  .cards{grid-template-columns:1fr; gap:18px}
+}
+
+/* Card base */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:var(--card-radius);
+  padding:28px;
+  transform-style:preserve-3d;
+  transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+  position:relative;
+  overflow:hidden;
+  min-height:360px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  border:1px solid rgba(255,255,255,0.03);
+  font-size:var(--body-size);
+}
+
+/* Profundidad extra */
+.card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background: linear-gradient(120deg, rgba(255,255,255,0.02), transparent 30%);
+  transform: translateZ(-40px) scale(1.02);
+  pointer-events:none;
+}
+
+/* Hover base */
+.card:hover{
+  transform: translateY(-14px) rotateX(6deg) rotateY(6deg) scale(1.02);
+  box-shadow: 0 30px 60px rgba(2,6,23,0.75);
+}
+
+/* Contenido */
+.badge{
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  color:var(--muted);
+  font-size:13px;
+  border:1px solid rgba(255,255,255,0.02);
+  font-weight:600;
+}
+
+.card h2{
+  margin:12px 0 6px 0;
+  font-family:var(--font-heading);
+  font-size:var(--h2-size);
+  letter-spacing:-0.01em;
+  font-weight:700;
+}
+
+.price{
+  font-weight:700;
+  font-size:26px;
+  color:var(--accent);
+  margin-bottom:12px;
+}
+
+.features{
+  text-align:left;
+  margin:12px 0 18px 0;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-right:6px;
+}
+.features li{
+  list-style:none;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-size:14px;
+}
+.features li::before{
+  content:"•";
+  color:var(--accent);
+  font-weight:700;
+  margin-top:2px;
+  font-size:18px;
+  line-height:1;
+}
+
+/* Botones */
+.cta{
+  margin-top:12px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.btn{
+  background:linear-gradient(90deg,var(--accent), #4fd6a3);
+  color:#042022;
+  padding:12px 16px;
+  border-radius:12px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  box-shadow: 0 8px 20px rgba(110,231,183,0.12);
+  font-family:var(--font-heading);
+}
+.btn:active{transform:translateY(2px)}
+.ghost{
+  background:transparent;
+  color:var(--muted);
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.04);
+  cursor:pointer;
+  font-family:var(--font-body);
+}
+
+/* Destacado */
+.card.featured{
+  background: linear-gradient(180deg, rgba(110,231,183,0.06), rgba(255,255,255,0.01));
+  border:1px solid rgba(110,231,183,0.12);
+  transform-origin:center;
+}
+
+/* Animación flotante */
+@keyframes floaty {
+  0%{transform: translateY(0)}
+  50%{transform: translateY(-6px)}
+  100%{transform: translateY(0)}
+}
+.card.featured{animation: floaty 6s ease-in-out infinite}
+
+/* Glow decorativo */
+.glow{
+  position:absolute;
+  width:220px;
+  height:220px;
+  right:-60px;
+  top:-60px;
+  background: radial-gradient(circle at 30% 30%, rgba(110,231,183,0.12), transparent 40%);
+  filter: blur(30px);
+  transition: opacity var(--transition);
+  opacity:0;
+  pointer-events:none;
+}
+.card:hover .glow{opacity:1}
+
+/* Notas y accesibilidad */
+.note{
+  margin-top:18px;
+  color:var(--muted);
+  font-size:13px;
+}
+.card:focus-within{
+  outline: 3px solid rgba(110,231,183,0.12);
+  outline-offset:6px;
+}
