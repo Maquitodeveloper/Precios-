@@ -1,9 +1,7 @@
 :root{
   --bg:#0f1724;
-  --card-bg:#0b1220;
   --accent:#6ee7b7;
   --muted:#9aa4b2;
-  --glass: rgba(255,255,255,0.03);
   --card-radius:18px;
   --transition: 400ms cubic-bezier(.2,.9,.3,1);
   --max-width:1100px;
@@ -16,7 +14,7 @@
   --body-size:15px;
 }
 
-/* Reset */
+/* Reset y base */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -37,6 +35,7 @@ body{
   width:100%;
   max-width:var(--max-width);
   text-align:center;
+  overflow: visible;
 }
 .hero h1{
   margin:0 0 8px 0;
@@ -59,10 +58,11 @@ body{
   gap:28px;
   perspective:1400px;
   align-items:start;
-  overflow: visible; /* evita recortes por transformaciones */
+  overflow: visible;
+  padding: 0 12px;
 }
 @media (max-width:920px){
-  .cards{grid-template-columns:1fr; gap:18px}
+  .cards{grid-template-columns:1fr; gap:18px; padding:0;}
 }
 
 /* Card base */
@@ -80,12 +80,13 @@ body{
   flex-direction:column;
   justify-content:space-between;
   border:1px solid rgba(255,255,255,0.03);
-  z-index:1; /* asegura visibilidad */
+  z-index:1;
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
+  min-width:0; /* evita que contenido forzado expanda la columna */
 }
 
-/* El pseudo-elemento no usa translateZ para evitar recortes en móviles */
+/* Pseudo-elemento simplificado para evitar stacking issues */
 .card::before{
   content:"";
   position:absolute;
@@ -96,7 +97,7 @@ body{
   pointer-events:none;
 }
 
-/* Hover base (solo en pantallas con puntero fino) */
+/* Hover (solo en dispositivos con puntero fino) */
 @media (hover:hover) and (pointer:fine){
   .card:hover{
     transform: translateY(-14px) rotateX(6deg) rotateY(6deg) scale(1.02);
@@ -194,15 +195,11 @@ body{
   transform-origin:center;
 }
 
-/* Animación flotante (suave) */
+/* Animación flotante (solo en puntero fino) */
 @keyframes floaty {
   0%{transform: translateY(0)}
   50%{transform: translateY(-6px)}
   100%{transform: translateY(0)}
-}
-@media (hover:none) and (pointer:coarse){
-  /* en pantallas táctiles no animar constantemente para ahorrar CPU */
-  .card.featured{animation:none}
 }
 @media (hover:hover) and (pointer:fine){
   .card.featured{animation: floaty 6s ease-in-out infinite}
@@ -251,5 +248,5 @@ body{
   .features{ gap:8px; font-size:13px; }
   .cta{ flex-direction:column; align-items:stretch; }
   .btn, .ghost{ width:100%; justify-content:center; }
-  .card::before{ display:none; } /* simplificar en móviles */
+  .card::before{ display:none; }
 }
