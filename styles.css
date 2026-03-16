@@ -8,7 +8,6 @@
   --transition: 400ms cubic-bezier(.2,.9,.3,1);
   --max-width:1100px;
 
-  /* Tipografía */
   --font-heading: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 
@@ -17,7 +16,7 @@
   --body-size:15px;
 }
 
-/* Reset y base */
+/* Reset */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -60,6 +59,7 @@ body{
   gap:28px;
   perspective:1400px;
   align-items:start;
+  overflow: visible; /* evita recortes por transformaciones */
 }
 @media (max-width:920px){
   .cards{grid-template-columns:1fr; gap:18px}
@@ -74,30 +74,34 @@ body{
   transition: transform var(--transition), box-shadow var(--transition);
   box-shadow: 0 10px 30px rgba(2,6,23,0.6);
   position:relative;
-  overflow:hidden;
+  overflow:visible;
   min-height:360px;
   display:flex;
   flex-direction:column;
   justify-content:space-between;
   border:1px solid rgba(255,255,255,0.03);
-  font-size:var(--body-size);
+  z-index:1; /* asegura visibilidad */
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
 }
 
-/* Profundidad extra */
+/* El pseudo-elemento no usa translateZ para evitar recortes en móviles */
 .card::before{
   content:"";
   position:absolute;
   inset:0;
   border-radius:inherit;
   background: linear-gradient(120deg, rgba(255,255,255,0.02), transparent 30%);
-  transform: translateZ(-40px) scale(1.02);
+  transform: none;
   pointer-events:none;
 }
 
-/* Hover base */
-.card:hover{
-  transform: translateY(-14px) rotateX(6deg) rotateY(6deg) scale(1.02);
-  box-shadow: 0 30px 60px rgba(2,6,23,0.75);
+/* Hover base (solo en pantallas con puntero fino) */
+@media (hover:hover) and (pointer:fine){
+  .card:hover{
+    transform: translateY(-14px) rotateX(6deg) rotateY(6deg) scale(1.02);
+    box-shadow: 0 30px 60px rgba(2,6,23,0.75);
+  }
 }
 
 /* Contenido */
@@ -186,16 +190,23 @@ body{
 .card.featured{
   background: linear-gradient(180deg, rgba(110,231,183,0.06), rgba(255,255,255,0.01));
   border:1px solid rgba(110,231,183,0.12);
+  z-index:2;
   transform-origin:center;
 }
 
-/* Animación flotante */
+/* Animación flotante (suave) */
 @keyframes floaty {
   0%{transform: translateY(0)}
   50%{transform: translateY(-6px)}
   100%{transform: translateY(0)}
 }
-.card.featured{animation: floaty 6s ease-in-out infinite}
+@media (hover:none) and (pointer:coarse){
+  /* en pantallas táctiles no animar constantemente para ahorrar CPU */
+  .card.featured{animation:none}
+}
+@media (hover:hover) and (pointer:fine){
+  .card.featured{animation: floaty 6s ease-in-out infinite}
+}
 
 /* Glow decorativo */
 .glow{
@@ -210,7 +221,9 @@ body{
   opacity:0;
   pointer-events:none;
 }
-.card:hover .glow{opacity:1}
+@media (hover:hover) and (pointer:fine){
+  .card:hover .glow{opacity:1}
+}
 
 /* Notas y accesibilidad */
 .note{
@@ -221,4 +234,22 @@ body{
 .card:focus-within{
   outline: 3px solid rgba(110,231,183,0.12);
   outline-offset:6px;
+}
+
+/* Ajustes tablet */
+@media (max-width:1100px){
+  :root{ --h1-size:24px; --h2-size:18px; }
+  .card{ padding:22px; min-height:320px; }
+}
+
+/* Ajustes móvil */
+@media (max-width:520px){
+  :root{ --h1-size:20px; --h2-size:16px; --body-size:14px; }
+  .card{ padding:16px; min-height:auto; border-radius:14px; }
+  .glow{ display:none; }
+  .card:hover{ transform:none; box-shadow: 0 8px 20px rgba(2,6,23,0.45); }
+  .features{ gap:8px; font-size:13px; }
+  .cta{ flex-direction:column; align-items:stretch; }
+  .btn, .ghost{ width:100%; justify-content:center; }
+  .card::before{ display:none; } /* simplificar en móviles */
 }
