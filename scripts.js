@@ -1,25 +1,40 @@
-// scripts.js
+// scripts.js — tilt 3D seguro y responsive
 document.addEventListener('DOMContentLoaded', () => {
   const cards = Array.from(document.querySelectorAll('.card'));
-  let activeListeners = new Map();
+  const POINTER_SUPPORTED = window.PointerEvent != null;
 
-  const isSmallScreen = () => window.matchMedia('(max-width:520px)').matches;
-  const isTouch = () => ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-  const supportsPointer = window.PointerEvent != null;
+  function isSmallScreen() {
+    return window.matchMedia('(max-width:920px)').matches;
+  }
+  function isTouchDevice() {
+    return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  }
 
-  function clearListeners(card) {
-    const data = activeListeners.get(card);
-    if (!data) return;
-    if (data.move) card.removeEventListener(data.move.type, data.move.handler, data.move.opts);
-    if (data.leave) card.removeEventListener('mouseleave', data.leave);
-    if (data.blur) card.removeEventListener('blur', data.blur);
-    if (data.focus) card.removeEventListener('focus', data.focus);
-    activeListeners.delete(card);
+  // Limpia transform inline y listeners previos
+  function resetCard(card) {
     card.style.transform = '';
+    card.style.transition = '';
+    // no asumimos listeners previos; los manejamos por referencia en map
+  }
+
+  // Map para guardar handlers y poder removerlos
+  const handlersMap = new WeakMap();
+
+  function removeHandlers(card) {
+    const h = handlersMap.get(card);
+    if (!h) return;
+    if (h.move) card.removeEventListener(h.move.event, h.move.fn, h.move.opts);
+    if (h.leave) card.removeEventListener('mouseleave', h.leave);
+    if (h.pointerleave) card.removeEventListener('pointerleave', h.pointerleave);
+    if (h.focus) card.removeEventListener('focus', h.focus);
+    if (h.blur) card.removeEventListener('blur', h.blur);
+    if (h.touchmove) card.removeEventListener('touchmove', h.touchmove, { passive: true });
+    handlersMap.delete(card);
+    resetCard(card);
   }
 
   function attachTilt(card) {
-    clearListeners(card);
+    removeHandlers(card);
 
     function rect() { return card.getBoundingClientRect(); }
 
@@ -33,46 +48,52 @@ document.addEventListener('DOMContentLoaded', () => {
       const rotateY = (px - 0.5) * 18;
       const rotateX = (0.5 - py) * 14;
       const scale = parseFloat(card.dataset.scale) || 1.02;
-      card.style.transform = `translateY(-8px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+      // usar requestAnimationFrame para suavizar
+      if (card._raf) cancelAnimationFrame(card._raf);
+      card._raf = requestAnimationFrame(() => {
+        card.style.transform = `translateY(-8px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+      });
     }
 
-    function handleLeave() { card.style.transform = ''; }
+    function handleLeave() {
+      if (card._raf) cancelAnimationFrame(card._raf);
+      card.style.transform = '';
+    }
 
     function handleFocus() {
       const scale = parseFloat(card.dataset.scale) || 1.02;
       card.style.transform = `translateY(-10px) scale(${scale})`;
     }
 
-    // Prefer pointer events when available
-    if (supportsPointer) {
-      card.addEventListener('pointermove', handleMove);
+    if (POINTER_SUPPORTED) {
+      card.addEventListener('pointermove', handleMove, { passive: true });
       card.addEventListener('pointerleave', handleLeave);
       card.addEventListener('focus', handleFocus);
       card.addEventListener('blur', handleLeave);
-      activeListeners.set(card, {
-        move: { type: 'pointermove', handler: handleMove, opts: { passive: true } },
-        leave: handleLeave,
-        blur: handleLeave,
-        focus: handleFocus
+      handlersMap.set(card, {
+        move: { event: 'pointermove', fn: handleMove, opts: { passive: true } },
+        pointerleave: handleLeave,
+        focus: handleFocus,
+        blur: handleLeave
       });
     } else {
-      // fallback to mouse/touch
-      card.addEventListener('mousemove', handleMove);
-      card.addEventListener('touchmove', handleMove, { passive: true });
+      card.addEventListener('mousemove', handleMove, { passive: true });
       card.addEventListener('mouseleave', handleLeave);
+      card.addEventListener('touchmove', handleMove, { passive: true });
       card.addEventListener('focus', handleFocus);
       card.addEventListener('blur', handleLeave);
-      activeListeners.set(card, {
-        move: { type: 'mousemove', handler: handleMove, opts: { passive: true } },
+      handlersMap.set(card, {
+        move: { event: 'mousemove', fn: handleMove, opts: { passive: true } },
         leave: handleLeave,
-        blur: handleLeave,
-        focus: handleFocus
+        touchmove: handleMove,
+        focus: handleFocus,
+        blur: handleLeave
       });
     }
   }
 
   function attachSimpleFocus(card) {
-    clearListeners(card);
+    removeHandlers(card);
     function onFocus() {
       const scale = parseFloat(card.dataset.scale) || 1;
       card.style.transform = `translateY(-8px) scale(${scale})`;
@@ -80,34 +101,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function onBlur() { card.style.transform = ''; }
     card.addEventListener('focus', onFocus);
     card.addEventListener('blur', onBlur);
-    activeListeners.set(card, { focus: onFocus, blur: onBlur });
+    handlersMap.set(card, { focus: onFocus, blur: onBlur });
   }
 
   function init() {
-    const small = isSmallScreen();
-    const touch = isTouch();
+    const disableTilt = isSmallScreen() || isTouchDevice();
     cards.forEach(card => {
-      clearListeners(card);
-      if (small || touch) {
-        attachSimpleFocus(card);
-      } else {
-        attachTilt(card);
-      }
+      removeHandlers(card);
+      resetCard(card);
+      if (disableTilt) attachSimpleFocus(card);
+      else attachTilt(card);
     });
   }
 
-  // Inicializar
+  // Inicializar y re-evaluar en resize (debounced)
   init();
-
-  // Re-evaluar al redimensionar (debounced)
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      // limpiar transform inline y re-inicializar listeners según nuevo tamaño
-      cards.forEach(c => c.style.transform = '');
+      // limpiar transforms y re-inicializar
+      cards.forEach(c => { c.style.transform = ''; });
       init();
     }, 120);
   });
 });
-
